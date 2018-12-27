@@ -1,6 +1,9 @@
 
 
-const STATIC_CACHE = 'static-v1';
+//imports
+importScripts( 'js/sw-utils.js' );
+
+const STATIC_CACHE = 'static-v2';
 const DYNAMIC_CACHE = 'dynamic-v1';
 const INMUTABLE_CACHE = 'inmutable-v1';
 
@@ -51,4 +54,29 @@ self.addEventListener( 'activate' , e => {
     });
 
     e.waitUntil( respuesta );
-})
+});
+
+//Cache con Network Fallback
+self.addEventListener( 'fetch', e => {
+
+    const respuesta = caches.match( e.request ).then( res => {
+        if ( res ) {
+            return res;
+        } else {
+            //console.log( e.request.url );
+            //Vemos que no se descargar las fuentes por lo tanto lo tenemos que añadir al cache
+            return fetch( e.request ).then( newResp => {
+                //Llegados aquí creamos una nuevo archivo SW para que no se haga esté más grande y lo llamamos sw-utils
+                //Tengo que hacer una refencia a sw-utils para que reconozca está función
+                return actualizarCacheDinamico( DYNAMIC_CACHE, e.request, newResp );
+                //Esta aplicación tiene un problema y es que el font-awesome se añade al seleccionar un personaje por lo tanto si el usuario se descargará la aplicación y después la usara en modo offline no se verían los iconos, la solución es añadirle un font awesome al inicio, al index.html.
+            });
+        }
+
+    })
+
+
+
+    e.respondWith( respuesta );
+
+});
